@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.site.springboot.core.dao.FileDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.site.springboot.core.entity.File">
+        <id column="file_id" property="fileId" jdbcType="BIGINT"/>
+        <result column="file_name" property="fileName" jdbcType="VARCHAR"/>
+        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
+        <result column="file_url" property="fileUrl" jdbcType="VARCHAR"/>
+        <result column="file_type" property="fileType" jdbcType="VARCHAR"/>
+        <result column="file_size" property="fileSize" jdbcType="BIGINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        file_id, file_name, file_path, file_url, file_type, file_size, create_time, update_time
+    </sql>
+
+    <!-- 查询所有文件列表 -->
+    <select id="selectFileList" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM tb_file
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据文件类型查询文件列表 -->
+    <select id="selectFileListByType" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM tb_file
+        WHERE file_type = #{fileType}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据文件名模糊查询 -->
+    <select id="selectFileListByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM tb_file
+        WHERE file_name LIKE CONCAT('%', #{fileName}, '%')
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入文件记录 -->
+    <insert id="insertFile" parameterType="com.site.springboot.core.entity.File" useGeneratedKeys="true" keyProperty="fileId">
+        INSERT INTO tb_file (
+            file_name, file_path, file_url, file_type, file_size, create_time, update_time
+        ) VALUES (
+            #{fileName}, #{filePath}, #{fileUrl}, #{fileType}, #{fileSize}, NOW(), NOW()
+        )
+    </insert>
+
+    <!-- 根据ID删除文件记录 -->
+    <delete id="deleteFileById" parameterType="java.lang.Long">
+        DELETE FROM tb_file WHERE file_id = #{fileId}
+    </delete>
+
+</mapper> 

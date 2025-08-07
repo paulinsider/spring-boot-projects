@@ -25,11 +25,11 @@ public class JdbcController {
 
     // 新增一条记录
     @GetMapping("/users/insert")
-    public Object insert(String name, String password) {
-        if (StringUtils.isEmpty(name) || StringUtils.isEmpty(password)) {
+    public Object insert(String names, String password) {
+        if (StringUtils.isEmpty(names) || StringUtils.isEmpty(password)) {
             return false;
         }
-        jdbcTemplate.execute("insert into tb_user(`name`,`password`) value (\"" + name + "\" ,\"" + password + "\" )");
+        jdbcTemplate.execute("insert into tb_user(`name`,`password`) value (\"" + names + "\" ,\"" + password + "\" )");
         return true;
     }
 }

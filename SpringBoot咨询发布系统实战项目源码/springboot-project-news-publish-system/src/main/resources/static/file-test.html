@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .file-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .file-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>文件管理API测试页面</h1>
+    
+    <div class="container">
+        <h2>数据库配置信息</h2>
+        <button class="btn" onclick="getConfig()">获取配置信息</button>
+        <div id="configResult" class="result"></div>
+    </div>
+    
+    <div class="container">
+        <h2>文件列表操作</h2>
+        <button class="btn" onclick="getFileList()">获取所有文件列表</button>
+        <button class="btn" onclick="getFileListByType()">按类型查询</button>
+        <button class="btn" onclick="getFileListByName()">按名称查询</button>
+        <div id="fileListResult" class="result"></div>
+    </div>
+    
+    <div class="container">
+        <h2>文件管理操作</h2>
+        <button class="btn" onclick="showAddFileForm()">添加文件</button>
+        <div id="addFileForm" style="display: none;">
+            <input type="text" id="fileName" placeholder="文件名">
+            <input type="text" id="filePath" placeholder="文件路径">
+            <input type="text" id="fileUrl" placeholder="文件URL">
+            <input type="text" id="fileType" placeholder="文件类型">
+            <input type="number" id="fileSize" placeholder="文件大小">
+            <button class="btn" onclick="addFile()">确认添加</button>
+        </div>
+        <div id="addFileResult" class="result"></div>
+    </div>
+
+    <script>
+        const baseUrl = '/api/file';
+        
+        // 获取配置信息
+        async function getConfig() {
+            try {
+                const response = await fetch(`${baseUrl}/config`);
+                const data = await response.json();
+                document.getElementById('configResult').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('configResult').textContent = '错误: ' + error.message;
+            }
+        }
+        
+        // 获取文件列表
+        async function getFileList() {
+            try {
+                const response = await fetch(`${baseUrl}/list`);
+                const data = await response.json();
+                displayFileList(data);
+            } catch (error) {
+                document.getElementById('fileListResult').textContent = '错误: ' + error.message;
+            }
+        }
+        
+        // 按类型查询文件
+        async function getFileListByType() {
+            const fileType = prompt('请输入文件类型 (如: image/jpeg):');
+            if (!fileType) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/list/type/${encodeURIComponent(fileType)}`);
+                const data = await response.json();
+                displayFileList(data);
+            } catch (error) {
+                document.getElementById('fileListResult').textContent = '错误: ' + error.message;
+            }
+        }
+        
+        // 按名称查询文件
+        async function getFileListByName() {
+            const fileName = prompt('请输入文件名:');
+            if (!fileName) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/list/name?fileName=${encodeURIComponent(fileName)}`);
+                const data = await response.json();
+                displayFileList(data);
+            } catch (error) {
+                document.getElementById('fileListResult').textContent = '错误: ' + error.message;
+            }
+        }
+        
+        // 显示文件列表
+        function displayFileList(data) {
+            const resultDiv = document.getElementById('fileListResult');
+            if (data.success) {
+                let html = `查询结果: ${data.message}\n总数: ${data.total}\n\n`;
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(file => {
+                        html += `<div class="file-item">
+                            <div class="file-name">${file.fileName}</div>
+                            <div class="file-info">
+                                ID: ${file.fileId} | 类型: ${file.fileType} | 大小: ${file.fileSize} 字节<br>
+                                路径: ${file.filePath}<br>
+                                URL: ${file.fileUrl}<br>
+                                创建时间: ${file.createTime}
+                            </div>
+                            <button class="btn btn-danger" onclick="deleteFile(${file.fileId})">删除</button>
+                        </div>`;
+                    });
+                } else {
+                    html += '没有找到文件';
+                }
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.textContent = '查询失败: ' + data.message;
+            }
+        }
+        
+        // 显示添加文件表单
+        function showAddFileForm() {
+            const form = document.getElementById('addFileForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // 添加文件
+        async function addFile() {
+            const fileData = {
+                fileName: document.getElementById('fileName').value,
+                filePath: document.getElementById('filePath').value,
+                fileUrl: document.getElementById('fileUrl').value,
+                fileType: document.getElementById('fileType').value,
+                fileSize: parseInt(document.getElementById('fileSize').value) || 0
+            };
+            
+            try {
+                const response = await fetch(`${baseUrl}/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(fileData)
+                });
+                const data = await response.json();
+                document.getElementById('addFileResult').textContent = JSON.stringify(data, null, 2);
+                if (data.success) {
+                    // 清空表单
+                    document.getElementById('fileName').value = '';
+                    document.getElementById('filePath').value = '';
+                    document.getElementById('fileUrl').value = '';
+                    document.getElementById('fileType').value = '';
+                    document.getElementById('fileSize').value = '';
+                }
+            } catch (error) {
+                document.getElementById('addFileResult').textContent = '错误: ' + error.message;
+            }
+        }
+        
+        // 删除文件
+        async function deleteFile(fileId) {
+            if (!confirm('确定要删除这个文件吗？')) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/delete/${fileId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                alert(data.message);
+                if (data.success) {
+                    getFileList(); // 刷新列表
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        // 页面加载时获取配置信息
+        window.onload = function() {
+            getConfig();
+        };
+    </script>
+</body>
+</html> 
