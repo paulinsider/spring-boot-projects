@@ -29,7 +29,7 @@ public class JdbcController {
         if (StringUtils.isEmpty(name) || StringUtils.isEmpty(password)) {
             return false;
         }
-        jdbcTemplate.execute("insert into tb_user(`name`,`password`) value (\"" + name + "\",\"" + password + "\")");
+        jdbcTemplate.execute("insert into tb_user(`name`,`password`) value (\"" + name + "\" ,\"" + password + "\" )");
         return true;
     }
 }
